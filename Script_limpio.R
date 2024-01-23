@@ -1,13 +1,15 @@
-library(kableExtra)
-library(DT)
-library(plotly)
-library(htmlwidgets)
-library(tidyverse)
-library(networkD3)
-library(dplyr)
-library(org.Hs.eg.db)
-library(AnnotationDbi)
-library(clusterProfiler)
+#library(kableExtra)
+#library(DT)
+#library(tools)
+#library(plotly)
+#library(htmlwidgets)
+#library(tidyverse)
+#library(networkD3)
+#library(dplyr)
+#library(org.Hs.eg.db)
+#library(AnnotationDbi)
+#library(clusterProfiler)
+library(highcharter)
 
 uRead <- function(file){
   ext <- file_ext(file)
@@ -252,6 +254,7 @@ net_up10 <- net_up %>% filter(Target %in% c(top10_names))
 net_up10
 simpleNetwork(net_up10, width = 400, height = 250, fontSize = 11, nodeColour = "orange", zoom = T)
 
+
 ######################### Red sub
 top100D <- GO_down[order(GO_down$Count, decreasing = T),]
 top100D_names <- top100D$Description[1:100]
@@ -268,7 +271,11 @@ top10D_names
 net_down100 <- net_down %>% filter(Target %in% c(top100D_names))
 net_down100
 
+
 ### 10 mas
 net_down10 <- net_down %>% filter(Target %in% c(top10D_names))
 simpleNetwork(net_down10, width = 400, height = 250, fontSize = 11, nodeColour = "orange", zoom = T)
+
+save(net_down10)
+#load('gregnet1.mat')
 
