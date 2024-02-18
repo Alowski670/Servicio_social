@@ -1,3 +1,4 @@
+
 library(kableExtra)
 library(DT)
 library(tools)
@@ -276,7 +277,7 @@ GO_analysis <- function(GO_ID){
   save(net_down, file = "net_down.RData")
   save(net_up, file = "net_up.RData")
 }
-GO_analysis(GO_ID = T)
+GO_analysis(GO_ID = F)
 
 ################ Redes con D3network
 D3net <- function(GO_ID){
@@ -372,4 +373,4 @@ D3net <- function(GO_ID){
     saveNetwork(net_down10, file = "net_down100.html", selfcontained = T)
   }
 }
-D3net(GO_ID = T)
+D3net(GO_ID = F)

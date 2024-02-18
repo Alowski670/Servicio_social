@@ -1,5 +1,7 @@
 library(tools)
-ext
+library(clusterProfiler)
+library(igraph)
+
 ### funcion para leer archivo
 uRead <- function(file){
   ext <- file_ext(file)
@@ -325,17 +327,19 @@ GO_analysis <- function(GO_ID){
   #### Analisis GO
   genesDEupSymbol <- genesDEup[ , 1]
   genesDEupSymbol
-  GO_up <- enrichGO(gene = genesDEupSymbol, OrgDb = "org.Hs.eg.db", keyType = "SYMBOL", ont = "BP")
-  GO_up <- as.data.frame(GO_up)
+  GO_up <- enrichGO(gene = genesDEupSymbol, OrgDb = "org.Hs.eg.db", keyType = "SYMBOL", ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH",
+                    qvalueCutoff = 0.2, minGSSize = 20, maxGSSize = 500)
+  GO_upT <- as.data.frame(GO_up)
   
   genesDEdownSymbol <- genesDEdown[ , 1]
   genesDEdownSymbol
-  GO_down <- enrichGO(gene = genesDEdownSymbol, OrgDb = "org.Hs.eg.db", keyType = "SYMBOL", ont = "BP")
-  GO_down <- as.data.frame(GO_down)
+  GO_down <- enrichGO(gene = genesDEdownSymbol, OrgDb = "org.Hs.eg.db", keyType = "SYMBOL", ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH",
+                      qvalueCutoff = 0.2, minGSSize = 20, maxGSSize = 500)
+  GO_downT <- as.data.frame(GO_down)
   
   ### Gráficas con las 20 categorías más comunes, de acuerdo al análisis GO
   png("graphGO_up.png")
-  GO_up10 <- GO_up[order(GO_up$Count, decreasing = T), ]
+  GO_up10 <- GO_upT[order(GO_up$Count, decreasing = T), ]
   GO_up10 <- GO_up10[1:10,]
   graphGO_up <- ggplot(GO_up10, aes(x=Description, y=Count, fill = Description)) + 
     geom_bar(stat = "identity") +
@@ -345,7 +349,7 @@ GO_analysis <- function(GO_ID){
   dev.off()
   
   png("graphGO_down.png")
-  GO_down10 <- GO_down[order(GO_down$Count, decreasing = T), ]
+  GO_down10 <- GO_downT[order(GO_downT$Count, decreasing = T), ]
   GO_down10 <- GO_down10[1:10,]
   graphGO_up <- ggplot(GO_down10, aes(x=Description, y=Count, fill = Description)) + 
     geom_bar(stat = "identity") +
@@ -355,8 +359,8 @@ GO_analysis <- function(GO_ID){
   dev.off()
   
   ##### Nuevas objetos para trabajar
-  blank_up <- subset(GO_up, select = c(Description, geneID))
-  blank_down <-subset(GO_down, select = c(Description, geneID))
+  blank_up <- subset(GO_upT, select = c(Description, geneID))
+  blank_down <-subset(GO_downT, select = c(Description, geneID))
   
   ### Quitando el "/" y reemplazándolo por espacios en blanco
   # SOBRE
@@ -396,7 +400,7 @@ GO_analysis <- function(GO_ID){
       net_up$Target <- "NO"
   
     for(i in 1:dim(blank_up[1])){
-      net_up$Target[to1:to2] <- (GO_up$Description[num1])
+      net_up$Target[to1:to2] <- (GO_upT$Description[num1])
       to1 <- to2 + 1 #79, 149
       to2 <- sum(str_length[1:num2]) #148, 210
       num1 <- num1 + 1 #2, 3
@@ -424,7 +428,7 @@ GO_analysis <- function(GO_ID){
     net_down
   
     for(i in 1:dim(blank_down[1])){
-      net_down$Target[to1D:to2D] <- (GO_down$Description[num1D])
+      net_down$Target[to1D:to2D] <- (GO_downT$Description[num1D])
       to1D <- to2D + 1 #79, 149
       to2D <- sum(str_lengthD[1:num2D]) #148, 210
       num1D <- num1D + 1 #2, 3
@@ -442,7 +446,7 @@ GO_analysis <- function(GO_ID){
     net_up$Target <- "NO"
     
     for(i in 1:dim(blank_up[1])){
-      net_up$Target[to1:to2] <- (GO_up$ID[num1])
+      net_up$Target[to1:to2] <- (GO_upT$ID[num1])
       to1 <- to2 + 1 #79, 149
       to2 <- sum(str_length[1:num2]) #148, 210
       num1 <- num1 + 1 #2, 3
@@ -470,7 +474,7 @@ GO_analysis <- function(GO_ID){
     net_down
     
     for(i in 1:dim(blank_down[1])){
-      net_down$Target[to1D:to2D] <- (GO_down$ID[num1D])
+      net_down$Target[to1D:to2D] <- (GO_downT$ID[num1D])
       to1D <- to2D + 1 #79, 149
       to2D <- sum(str_lengthD[1:num2D]) #148, 210
       num1D <- num1D + 1 #2, 3
@@ -585,3 +589,203 @@ if(GO_ID == F){
   }
 }
 D3net(GO_ID = T)
+
+##############################################333
+########## RED CON LAS CATEGORIAS
+library(clusterProfiler)
+emapplot(GO_up)
+
+#if (!require("BiocManager", quietly = TRUE))
+ # install.packages("BiocManager")
+
+#BiocManager::install("enrichplot", force = T)
+
+library(enrichplot)
+library(clusterProfiler)
+library(org.Hs.eg.db)
+library(GOSemSim)
+
+d <- godata("org.Hs.eg.db", ont = "BP")
+arriba <- pairwise_termsim(GO_up, semData = d)
+View(arriba@termsim) ### para ver similaridad de terminos
+emapplot(arriba)
+View(emapplot)
+
+library(networkD3)
+
+### sacar la matriz de similaridad
+simpleNetwork(arriba@termsim)
+
+Source <- colnames(arriba@termsim)
+Source
+Target <- colnames(similarity)
+Value <- 1:dim(similarity)[1]
+networkUP <- data.frame(Source, Target, Value )
+#networkUP <- ## rep los terminos de source para crear la columna source
+
+### ciclo for para sacar el valor de veces que se tiene que repetir cada categoria para el nuevo data frame
+#similarity <- arriba@termsim
+#select_row <- 1 
+#category_number <- c()
+#for(i in 1:dim(similarity)[1]- 1){
+  #category_value <-  which(similarity[select_row, ] != "NA")
+  #category_number <- c(category_number, length(category_value))
+  #select_row <- select_row + 1
+#}
+#category_number
+
+num1 <- 1
+for(i in 1:dim(similarity)[1]){
+  networkUP$Source <- rep(Source[num1], times = 1, each = category_number[num1])
+  num1 <- num1 + 1
+}
+
+k <- rep(Source[1], times = 1, each = category_number[1])
+k
+
+View(networkUP)
+
+similarity <- arriba@termsim
+select_row <- 1 
+category_number <- c()
+for(i in 1:dim(similarity)[1]- 1){
+category_value <-  similarity[select_row, ]
+category_number <- c(category_number, length(category_value))
+select_row <- select_row + 1
+}
+category_number
+
+#### otra idea
+Source <- c(1:dim(similarity)[1]*dim(similarity)[1])
+Source
+networkUP <- data.frame(Source)
+View(networkUP)
+
+cat_names <- c(colnames(similarity))
+cat_names
+num <- 1
+for(i in 1:dim(similarity)[1]){
+  networkUP$Source <- rep(cat_names[num], times = 1, each = 1:dim(similarity)[1])
+  num <- num + 1
+}
+
+############### metodo con matriz similaridad
+similarity <- arriba@termsim 
+networkUP <- data.frame()
+cat_names <- c(colnames(similarity))
+cat_names
+
+num <- 1
+Source <- c()
+Target <- c()
+Value <- c()
+for(i in 1:dim(similarity)[1]){
+  Source <- c(Source, rep(cat_names[num], times = dim(similarity)[1], each = 1:dim(similarity)[1]))
+  Target <- c(Target, rep(cat_names, times = 1, each = 1))
+  Value <- c(Value, similarity[num, ])
+  num <- num + 1
+  
+}
+Source
+Target
+Value
+networkUP <- data.frame(Source, Target, Value)
+View(networkUP)
+
+rep(cat_names, times = 1, each = 1)
+
+networkUP_final <- na.omit(networkUP)
+View(networkUP_final)
+
+library(networkD3)
+simpleNetwork(networkUP_final, width = 400, height = 250, fontSize = 11, nodeColour = "orange", zoom = T)
+
+###################### A PARTIR DE AQUI EN TEORIA FUNCIONA
+### para los down
+library(dplyr)
+library(enrichplot)
+library(clusterProfiler)
+library(ggplot2)
+library(GOSemSim)
+###### cortar la red, para asi poder ver como interactuan entre si
+GO_downT <- as.data.frame(GO_down)
+GO_downT <- GO_downT@result[order(GO_downT@result$Count, decreasing = T),]
+GO_downT <- filter(GO_downT, Count > 9)
+GO_downT <- enrichGO(GO_downT)
+View(GO_downT@result)
+
+d <- godata("org.Hs.eg.db", ont = "BP")
+abajo <- pairwise_termsim(GO_downT, semData = d)
+similarity_down <- abajo@termsim
+View(similarity_down)
+networkDown <- data.frame()
+
+cat_namesD <- c(colnames(similarity_down))
+length(cat_namesD)
+
+num <- 1
+Source <- c()
+Target <- c()
+Value <- c()
+for(i in 1:dim(similarity_down)[1]){
+  Source <- c(Source, rep(cat_namesD[num], times = dim(similarity_down)[1], each = 1:dim(similarity_down)[1]))
+  Target <- c(Target, rep(cat_namesD, times = 1, each = 1))
+  Value <- c(Value, similarity_down[num, ])
+  num <- num + 1
+  
+}
+
+#### Modificando Source y target para quedarnos con las categorias con el mayor count
+Source
+Target
+Value
+networkDown <- data.frame(Source, Target, Value)
+networkDown_final <- networkDown
+View(networkDown)
+#### quitando los invalidos
+num <- 1
+  for(i in 1:length(invalid)){
+    networkDown_final <- filter(networkDown_final, Source != invalid[num])
+    num <- num + 1
+  }
+invalid
+
+#### quitando NAs
+#networkDown_final$Value[networkDown_final$Value <= 0.05] <- "NA"
+networkDown_final <- filter(networkDown_final, Value != "NA")
+
+View(networkDown_final)
+netD <- networkDown_final[order(networkDown_final$Value, decreasing = T), ]
+net <- networkDown_final
+View(netD)
+netD <- netD[1:20, ]
+net <- net[1:300,]
+#### funciona ahora añadir los conteos a las categorias
+
+library(networkD3)
+library(enrichplot)
+simpleNetwork(netD, width = 400, height = 250, fontSize = 11, nodeColour = "orange", zoom = T)
+emapplot(abajo, showCategory = 10)
+cnetplot(abajo)
+View(abajo@termsim)
+### cambiar valores de p o q
+
+library(igraph)
+library(dplyr)
+help("emapplot,compareClusterResult-method")
+x <- graph_from_adjacency_matrix(similarity_down )
+plot(x)
+
+### quitando categorias que no cumplan con cierto numero de counts
+View(GO_upT)
+invalid <- filter(GO_downT, Count < 20)
+invalid <- invalid$Description
+invalid
+head(invalid)
+View(similarity_downFinal)
+similarity_downFinal <- similarity_down
+similarity_downFinal <- which(similarity_down != "striated muscle contraction")
+############ enrich plot se ve interesante, revisar
+
+####################################################
+################# Red con las categorias 2do intento

@@ -1,0 +1,51 @@
+GO.ID,Term,Annotated,Significant,Expected,weightFisher,p.adj
+GO:1901380,negative regulation of potassium ion tra...,21,6,0.59,1.8e-05,0.0531
+GO:0030326,embryonic limb morphogenesis,119,12,3.34,2.3e-05,0.0531
+GO:0010765,positive regulation of sodium ion transp...,30,6,0.84,0.00016,0.1771
+GO:0010881,regulation of cardiac muscle contraction...,20,5,0.56,0.00019,0.1771
+GO:2001258,negative regulation of cation channel ac...,32,6,0.9,0.00023,0.1771
+GO:0086005,ventricular cardiac muscle cell action p...,32,6,0.9,0.00023,0.1771
+GO:2000649,regulation of sodium ion transmembrane t...,36,6,1.01,0.00045,0.2969
+GO:0086091,regulation of heart rate by cardiac cond...,39,6,1.1,0.00071,0.4099
+GO:0051497,negative regulation of stress fiber asse...,28,5,0.79,0.00099,0.4619
+GO:0090090,negative regulation of canonical Wnt sig...,129,11,3.63,0.00103,0.4619
+GO:0003009,skeletal muscle contraction,43,6,1.21,0.00120,0.4619
+GO:2000300,regulation of synaptic vesicle exocytosi...,43,6,1.21,0.00120,0.4619
+GO:0045892,negative regulation of DNA-templated tra...,1228,50,34.52,0.00166,0.5774
+GO:0003007,heart morphogenesis,254,16,7.14,0.00175,0.5774
+GO:0001893,maternal placenta development,34,5,0.96,0.00226,0.6959
+GO:0086004,regulation of cardiac muscle cell contra...,34,5,0.96,0.00243,0.7015
+GO:0140115,export across plasma membrane,68,7,1.91,0.00292,0.7322
+GO:0016310,phosphorylation,1510,51,42.44,0.00297,0.7322
+GO:0019229,regulation of vasoconstriction,68,6,1.91,0.00314,0.7322
+GO:0055013,cardiac muscle cell development,75,8,2.11,0.00352,0.7322
+GO:0030010,establishment of cell polarity,148,10,4.16,0.00383,0.7322
+GO:0030512,negative regulation of transforming grow...,91,8,2.56,0.00405,0.7322
+GO:0051148,negative regulation of muscle cell diffe...,57,7,1.6,0.00411,0.7322
+GO:2000209,regulation of anoikis,24,4,0.67,0.00418,0.7322
+GO:1905207,regulation of cardiocyte differentiation,24,4,0.67,0.00418,0.7322
+GO:1901385,regulation of voltage-gated calcium chan...,24,4,0.67,0.00418,0.7322
+GO:0048699,generation of neurons,1404,53,39.46,0.00428,0.7322
+GO:0010460,positive regulation of heart rate,25,4,0.7,0.00487,0.8034
+GO:1901020,negative regulation of calcium ion trans...,26,4,0.73,0.00563,0.8668
+GO:0033137,negative regulation of peptidyl-serine p...,26,4,0.73,0.00563,0.8668
+GO:0048514,blood vessel morphogenesis,591,21,16.61,0.00629,0.9372
+GO:0048858,cell projection morphogenesis,639,22,17.96,0.00737,0.9546
+GO:0098901,regulation of cardiac muscle cell action...,28,4,0.79,0.00738,0.9546
+GO:0030325,adrenal gland development,28,4,0.79,0.00738,0.9546
+GO:1901021,positive regulation of calcium ion trans...,28,4,0.79,0.00738,0.9546
+GO:0099625,ventricular cardiac muscle cell membrane...,26,3,0.73,0.00744,0.9546
+GO:0008543,fibroblast growth factor receptor signal...,77,6,2.16,0.00830,1
+GO:0043433,negative regulation of DNA-binding trans...,136,9,3.82,0.00893,1
+GO:0010976,positive regulation of neuron projection...,148,10,4.16,0.00904,1
+GO:0009952,anterior/posterior pattern specification,212,12,5.96,0.00935,1
+GO:0001885,endothelial cell development,64,5,1.8,0.00936,1
+GO:0055010,ventricular cardiac muscle tissue morpho...,47,5,1.32,0.00996,1
+GO:0086019,cell-cell signaling involved in cardiac ...,31,4,0.87,0.01062,1
+GO:0086011,membrane repolarization during action po...,27,5,0.76,0.01085,1
+GO:1901016,regulation of potassium ion transmembran...,48,5,1.35,0.01087,1
+GO:0061053,somite development,83,5,2.33,0.01117,1
+GO:0060976,coronary vasculature development,49,5,1.38,0.01184,1
+GO:0005975,carbohydrate metabolic process,543,20,15.26,0.01184,1
+GO:0043161,proteasome-mediated ubiquitin-dependent ...,430,20,12.09,0.01299,1
+GO:0046320,regulation of fatty acid oxidation,33,4,0.93,0.01322,1
