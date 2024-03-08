@@ -789,3 +789,53 @@ similarity_downFinal <- which(similarity_down != "striated muscle contraction")
 
 ####################################################
 ################# Red con las categorias 2do intento
+
+
+
+################### FORCE NETWORK
+netD_UP$Source <- chartr(old = " ", new = "_", netD_UP$Source)
+netD_UP$Target <- chartr(old = " ", new = "_", netD_UP$Target)
+View(netD_UP)
+netD_UP2 <- netD_UP[1:50, ]
+
+Source <- netD_UP2$Source
+Target <- netD_UP2$Target
+
+nodes <- data.frame(name = unique(c(Source, Target)), stringsAsFactors = FALSE)
+nodes$name <- chartr(old = " ", new = "_", nodes$name)
+View(nodes)
+
+###Necesitamos sacar los conteos de cada gen que nos sale, para poder cambiar el color de
+### los nodos acorde al numero de genes por categoria
+counts <- GO_upT[GO_upT$Description %in%nodes$name , ]
+View(counts)
+
+### ordenando el data frame con los conteos y el data frame con los nodos
+counts <- subset(counts, select = c(Description, Count))
+counts <- counts[order(counts$Description),]
+nodes <- nodes[order(nodes$name), ]
+nodes <- as.data.frame(nodes)
+nodes$id <- 0:(nrow(nodes) - 1)
+nodes$counts <- counts$Count
+View(nodes)
+
+
+#edges <- subset(netD_UP, select = c(Source, Target))
+#edges <- netD_UP[edges$Source %in% nodes$nodes & edges$Target %in% nodes$nodes,]
+edges <- data.frame(Source, Target, stringsAsFactors = F)
+edges$width <- 1
+edges$Source <- chartr(old = " ", new = "_", edges$Source)
+edges$Target <- chartr(old = " ", new = "_", edges$Target)
+View(edges)
+
+nodes$group <- ifelse(nodes$counts >= 20, "Enriquecido", "No_enriquecido")
+
+NetUP_force <- forceNetwork(Links = edges, Nodes = nodes, 
+                            Source = "Source",
+                            Target = "Target",
+                            NodeID ="nodes",
+                            Group = "group",
+                            Value = "width",
+                            opacity = 0.9,
+                            zoom = TRUE)
+NetUP_force

@@ -177,6 +177,8 @@ load("net_down.RData")
 load("net_up.RData")
 ###### cortar la red, para asi poder ver como interactuan entre si
 GO_downT <- GO_down
+GO_downT <- as.data.frame(GO_downT)
+GO_downT$Description <- chartr(old = " ", new = "_", GO_downT$Description)
 #GO_downT <- filter(GO_downT, Count > 20)
 #GO_downT <- enrichGO(GO_downT)
 
@@ -233,6 +235,7 @@ cnetplot(down)
 
 ########################## PARA LOS UP
 GO_upT <- as.data.frame(GO_up)
+GO_upT$Description <- chartr(old = " ", new = "_", GO_upT$Description)
 #GO_upT <- GO_upT@result[order(GO_upT@result$Count, decreasing = T),]
 #GO_upT <- filter(GO_upT, Count > 20)
 #GO_upT <- enrichGO(GO_upT)
@@ -290,3 +293,116 @@ cnetplot(up)
 }
 
 netGO( 20)
+
+############################33
+#############################
+#   FORCE NETWORK
+library(networkD3)
+library(dplyr)
+### Acortamos la red a 400 elementos, para que la compu no explote
+netD_UP2 <- netD_UP[1:400, ]
+
+### Asignamos los datos de la columna source de la matriz
+## de adyacencia a un objeto src, lo mismo para target
+src <- netD_UP2$Source 
+
+target <- netD_UP2$Target
+### Despues creamos un objeto que contenga los vectores src y target, nuestra nueva
+# matriz de adyacencia
+networkData <- data.frame(src, target, stringsAsFactors = FALSE)
+
+
+##indicamos que no se repita ninguna categoría dentro de los vectores con unique,
+# para crear un data frame que tenga solo el total de categorías
+nodes <- data.frame(name = unique(c(networkData$src, networkData$target)))
+
+### Para sacar los conteos asociados a cada categoría utilizamos %in$. Para que
+# nos indique cuáles de los elementos de las categorías que tenemos se encuentran
+# en el objeto del análisis GO (tiene los conteos para cada categoría)
+counts <- GO_upT[GO_upT$Description %in%nodes$name , ]
+### Seleccionamos solo las columnas con los nombres de las categorías y conteos (genes asociados a la categoría)
+counts <- subset(counts, select = c(Description, Count))
+counts <- counts[order(counts$Description),]
+#View(counts)
+
+### Asignamos los conteos a nuestro nodes2, contiene las categorías (nodos), y
+# sus respectivos conteos 
+nodes2 <- nodes[order(nodes$name), ]
+nodes2 <- as.data.frame(nodes2)
+nodes2$counts <- counts$Count
+nodes2 <- as.data.frame(nodes2)
+#View(nodes2)
+
+### Creamos los grupos, donde tener 20 o más genes asociados hace que la categoría
+# se considere enriquecida
+nodes2$group <- ifelse(nodes2$counts >= 50, "Enriquecido", "No_enriquecido")
+
+### Para crear las conexiones entre los nodos utilizamos "match". Es decir, que se tomarán
+# aquellos elementos de la matriz de adyacencia, en su columna src, que correspondan
+# con las categorías que están en nodes.
+links <- data.frame(source = match(networkData$src, nodes$name) - 1,
+                    target = match(networkData$target, nodes$name) - 1)
+
+### Generar colores para los grupos
+colorJS <- 'd3.scaleOrdinal().range(["forestgreen", "darkcyan"])'
+### Crear RED
+
+Net_UP_Force <- forceNetwork(Links = links, Nodes = nodes2, Source = "source",
+                  Target = "target", NodeID ="nodes2", Group = "group",
+                  opacity = 1, opacityNoHover = 1, colourScale = colorJS,
+                  zoom = T)
+saveNetwork(Net_UP_Force, file = "Net_up_Grupos.html", selfcontained = T)
+Net_UP_Force
+############### para los DOWN
+netD_Down <- netD[1:400, ]
+netD_Down$Source <- chartr(old = " ", new = "_", netD_Down$Source)
+netD_Down$Target <- chartr(old = " ", new = "_", netD_Down$Target)
+
+src <- netD_Down$Source
+target <- netD_Down$Target
+### Despues creamos un objeto que contenga los vectores src y target, nuestra nueva
+# matriz de adyacencia
+networkData <- data.frame(src, target, stringsAsFactors = FALSE)
+
+
+##indicamos que no se repita ninguna categoría dentro de los vectores con unique,
+# para crear un data frame que tenga solo el total de categorías
+nodes <- data.frame(name = unique(c(networkData$src, networkData$target)))
+View(nodes)
+### Para sacar los conteos asociados a cada categoría utilizamos %in$. Para que
+# nos indique cuáles de los elementos de las categorías que tenemos se encuentran
+# en el objeto del análisis GO (tiene los conteos para cada categoría)
+counts <- GO_downT[GO_downT$Description %in% nodes$name , ]
+### Seleccionamos solo las columnas con los nombres de las categorías y conteos (genes asociados a la categoría)
+counts <- subset(counts, select = c(Description, Count))
+counts <- counts[order(counts$Description),]
+View(counts)
+
+### Asignamos los conteos a nuestro nodes2, contiene las categorías (nodos), y
+# sus respectivos conteos 
+nodes2 <- nodes[order(nodes$name), ]
+nodes2 <- as.data.frame(nodes2)
+nodes2$counts <- counts$Count
+nodes2 <- as.data.frame(nodes2)
+#View(nodes2)
+
+### Creamos los grupos, donde tener 20 o más genes asociados hace que la categoría
+# se considere enriquecida
+nodes2$group <- ifelse(nodes2$counts >= 10, "Enriquecido", "No_enriquecido")
+
+### Para crear las conexiones entre los nodos utilizamos "match". Es decir, que se tomarán
+# aquellos elementos de la matriz de adyacencia, en su columna src, que correspondan
+# con las categorías que están en nodes.
+links <- data.frame(source = match(networkData$src, nodes$name) - 1,
+                    target = match(networkData$target, nodes$name) - 1)
+
+### Generar colores para los grupos
+colorJS <- 'd3.scaleOrdinal().range(["gold", "gray0"])'
+### Crear RED
+
+Net_Down_Force <- forceNetwork(Links = links, Nodes = nodes2, Source = "source",
+                      Target = "target", NodeID ="nodes2", Group = "group",
+                      opacity = 1, opacityNoHover = 1, colourScale = colorJS,
+                      zoom = T)
+saveNetwork(Net_Down_Force, file = "Net_down_Grupos.html", selfcontained = T)
+Net_Down_Force
