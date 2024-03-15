@@ -839,3 +839,22 @@ NetUP_force <- forceNetwork(Links = edges, Nodes = nodes,
                             opacity = 0.9,
                             zoom = TRUE)
 NetUP_force
+
+################# Modificaciones
+d_up <- godata("org.Hs.eg.db", ont = "BP")
+save(d_up, file = "d_up.RData")
+
+d_down <- godata("org.Hs.eg.db", ont = "BP")
+save(d_down, file = "d_down.RData")
+
+netGO <- function(lim){
+  ###################### A PARTIR DE AQUI EN TEORIA FUNCIONA
+  ### para los down
+  lim <- as.numeric(lim)
+  load("d_up.RData")
+  load("d_down.RData")
+  load("GO_up.RData")
+  load("GO_down.RData")
+  load("net_down.RData")
+  load("net_up.RData")
+  ###### cortar la red, para asi poder ver como interactuan entre si

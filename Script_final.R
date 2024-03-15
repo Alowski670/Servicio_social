@@ -36,6 +36,7 @@ GeneDE <- function(lista, pvalor, patron, GeneNumber){
   print(dim(list_gene))
   head(list_gene, n= 3)
   
+  ### Encontrar los genes diferencialmente expresados de acuerdo al valor de p
   genesDE <- list_gene[list_gene$adj.P.Val < pvalor & 
                          abs(list_gene$logFC) > log2(1.5), ]
   
@@ -56,14 +57,22 @@ GeneDE <- function(lista, pvalor, patron, GeneNumber){
   ### Crear tablas interactivas con DT
   tabla_DT <- datatable(list_gene)
   htmlwidgets::saveWidget(tabla_DT, "tabla_DT.html")
-  ### Tablas interactivas con kableextra
+  ######### Tablas interactivas con kableextra
+  
+  ### Encontrar genes sobreexpresados
   genesDEup <- filter(genesDE, logFC > 0)
+  ### Ordenarlos
   genesDEup <- genesDEup[order(genesDEup$logFC, decreasing = F),]
+  ### Gene number representa el número de genes que quieres que se vean en las
+  # gráficas de barras
   genesDEup2 <- genesDEup[1:GeneNumber, ]
-  x <- c(genesDEup2$Symbol)
-  y <- c(genesDEup2$logFC)
+  
+  ###########3 Gráfica con plot_ly
+  x <- c(genesDEup2$Symbol) # el eje de las x serán los símbolos de los genes
+  y <- c(genesDEup2$logFC) # El logFC nos dirá qué tanto están sobreexpresados
   text <- c(genesDEup2$Symbol)
   data <- data.frame(x, y, text)
+  
   fig <- plot_ly(data, x = ~x, y = ~y, type = 'bar',
                  text = y, textposition = 'auto',
                  marker = list(color = 'rgb(58,10,232)'))
@@ -74,8 +83,10 @@ GeneDE <- function(lista, pvalor, patron, GeneNumber){
                         
                         yaxis = list(title = "LogFC"))
   
+  ###### Guardar la gráfica
   htmlwidgets::saveWidget(fig, "up.html", selfcontained = T, libdir = "lib")
   
+  ############## Lo mismo pero para los genes subexpresados
   genesDEdown <- filter(genesDE, logFC < 0)
   genesDEdown <- genesDEdown[order(genesDEdown$logFC, decreasing = F),]
   genesDEdown2 <- genesDEdown[1:GeneNumber, ]
@@ -95,8 +106,8 @@ GeneDE <- function(lista, pvalor, patron, GeneNumber){
   
   htmlwidgets::saveWidget(fig2, "down.html", selfcontained = T, libdir = "lib")
   
-  #### Fig tree
-  genesDEdown100 <- genesDEdown[1:10, ]
+  #### Gráficas fig tree para los genes subexpresados, usando el valor de p
+  genesDEdown100 <- genesDEdown[1:GeneNumber, ]
   tree_down <- genesDEdown100 %>%  
     hchart(type = "treemap", hcaes(x = Symbol, value = adj.P.Val, color = adj.P.Val)) |>
     hc_title(text ="Genes sub expresados organizados de acuerdo a su valor de p") |>
@@ -104,7 +115,8 @@ GeneDE <- function(lista, pvalor, patron, GeneNumber){
   
   htmlwidgets::saveWidget(tree_down, "TreemapDE_down.html", selfcontained = T, libdir = "lib")
   
-  genesDEup100 <- genesDEup[1:10, ]
+  ######### Fig tree para los sobreexpresados
+  genesDEup100 <- genesDEup[1:GeneNumber, ]
   tree_up <- genesDEup100 %>%  
     hchart(type = "treemap", hcaes(x = Symbol, value = adj.P.Val, color = adj.P.Val)) |>
     hc_title(text ="Genes sobre expresados organizados de acuerdo a su valor de p") |>
@@ -112,27 +124,39 @@ GeneDE <- function(lista, pvalor, patron, GeneNumber){
   
   htmlwidgets::saveWidget(tree_up, "TreemapDE_up.html", selfcontained = T, libdir = "lib")
   
+  ######## Guardando los genes sobre y subexpresados
   save(genesDE, file = "genesDE.RData")
   save(genesDEup, file = "genesDEup.RData")
   save(genesDEdown, file = "genesDEdown.RData")
 }
 GeneDE("Datos_Costa_Castelo/ttFIRinELGANsUCtissue.rds", pvalor = 0.01, patron = "TLR", GeneNumber = 10)
 
-GO_analysis <- function(){
+######## Analisis GO
+GO_analysis <- function(searchFormat, typeProcess ){
+  
+  serchFormat <- as.character(searchFormat)
+  typeProcess <- as.character(typeProcess)
+  ####### Cargar las tablas con los sobre y los subexpresados
   load("genesDEup.RData")
   load("genesDEdown.RData")
-  #### Analisis GO
+  
+  ####### Tomando solo los símbolos de los genes para realizar la búsqueda en 
+  # la base de datos org.Hs.eg.db
   genesDEupSymbol <- genesDEup[ , 1]
   genesDEupSymbol
-  GO_up <- enrichGO(gene = genesDEupSymbol, OrgDb = "org.Hs.eg.db", keyType = "SYMBOL", ont = "BP")
+  
+  ###### En este caso se utiliza el formato symbol para los genes, dado por la variable searchFormat
+  # En este caso se utiliza biological process, pero puede cambiarse en la variable typeProcess
+  GO_up <- enrichGO(gene = genesDEupSymbol, OrgDb = "org.Hs.eg.db", keyType = searchFormat, ont = typeProcess)
   GO_up <- as.data.frame(GO_up)
   
+  ###### Para los genes subexpresados
   genesDEdownSymbol <- genesDEdown[ , 1]
   genesDEdownSymbol
-  GO_down <- enrichGO(gene = genesDEdownSymbol, OrgDb = "org.Hs.eg.db", keyType = "SYMBOL", ont = "BP")
+  GO_down <- enrichGO(gene = genesDEdownSymbol, OrgDb = "org.Hs.eg.db", keyType = searchFormat, ont = typeProcess)
   GO_down <- as.data.frame(GO_down)
   
-  ### Gráficas con las 20 categorías más comunes, de acuerdo al análisis GO
+  ### Gráficas con las 20 categorías más comunes, para los sobreexpresados, de acuerdo al análisis GO
   png("graphGO_up.png")
   GO_up10 <- GO_up[order(GO_up$Count, decreasing = T), ]
   GO_up10 <- GO_up10[1:10,]
@@ -142,7 +166,8 @@ GO_analysis <- function(){
     coord_flip()
   graphGO_up
   dev.off()
-  
+ 
+  ### Gráficas con las 20 categorías más comunes, para los subexpresados, de acuerdo al análisis GO 
   png("graphGO_down.png")
   GO_down10 <- GO_down[order(GO_down$Count, decreasing = T), ]
   GO_down10 <- GO_down10[1:10,]
@@ -153,92 +178,80 @@ GO_analysis <- function(){
   graphGO_up
   dev.off()
   
+  #### Guardando archivos con genes sub y sobre expresados
   save(GO_up, file = "GO_up.RData")
   save(GO_down, file = "GO_down.RData")
   save(net_down, file = "net_down.RData")
   save(net_up, file = "net_up.RData")
 }
 
-d_up <- godata("org.Hs.eg.db", ont = "BP")
-save(d_up, file = "d_up.RData")
 
-d_down <- godata("org.Hs.eg.db", ont = "BP")
-save(d_down, file = "d_down.RData")
+############ REDES CON net con networkD3
 
-netGO <- function(lim){
-###################### A PARTIR DE AQUI EN TEORIA FUNCIONA
-### para los down
-lim <- as.numeric(lim)
-load("d_up.RData")
-load("d_down.RData")
-load("GO_up.RData")
-load("GO_down.RData")
-load("net_down.RData")
-load("net_up.RData")
-###### cortar la red, para asi poder ver como interactuan entre si
-GO_downT <- GO_down
-GO_downT <- as.data.frame(GO_downT)
-GO_downT$Description <- chartr(old = " ", new = "_", GO_downT$Description)
-#GO_downT <- filter(GO_downT, Count > 20)
-#GO_downT <- enrichGO(GO_downT)
+#### Guardar las categorías encontradas en la base de datos org.Hs.eg.db
+dataCategory <- godata("org.Hs.eg.db", ont = "BP")
+save(dataCategory, file = "d_up.RData")
 
-invalid_down <- filter(GO_downT, Count < lim)
-invalid_down <- invalid_down$Description
+networkGO <- function(lim){
+    lim <- as.numeric(lim)
+    ### Guardamos el objeto GO_down de tipo enrichGO a un data frame
+    GO_downT <- GO_down
+    GO_downT <- as.data.frame(GO_downT)
+    ### Añadimos un _ y quitamos espacios vacíos
+    GO_downT$Description <- chartr(old = " ", new = "_", GO_downT$Description)
+    
+    ### Removemos las categorías que no cumplan con un cierto número de genes 
+    # asociados a ella (lim)
+    invalid_down <- filter(GO_downT, Count < lim)
+    ### nos quedamos con las categorías invalidas
+    invalid_down <- invalid_down$Description
+    
+    ### Matriz de similaridad que utilizaremos para crear nuestra red
+    down <- pairwise_termsim(GO_downT, semData = d_down)
+    similarity_down <- down@termsim
+    networkDown <- data.frame()
 
-down <- pairwise_termsim(GO_downT, semData = d_down)
-similarity_down <- down@termsim
-networkDown <- data.frame()
+    ### Obtner el nombre de cada una de las categorías en la matriz de similaridad
+    cat_namesD <- c(colnames(similarity_down))
 
-cat_namesD <- c(colnames(similarity_down))
-length(cat_namesD)
-
-num <- 1
-Source <- c()
-Target <- c()
-Value <- c()
-for(i in 1:dim(similarity_down)[1]){
-  Source <- c(Source, rep(cat_namesD[num], times = dim(similarity_down)[1], each = 1:dim(similarity_down)[1]))
-  Target <- c(Target, rep(cat_namesD, times = 1, each = 1))
-  Value <- c(Value, similarity_down[num, ])
-  num <- num + 1
-  
+###### Ciclo para crear las 3 columnas que formaran la matriz de similaridad
+      num <- 1
+      Source <- c()
+      Target <- c()
+      Value <- c()
+        for(i in 1:dim(similarity_down)[1]){
+          Source <- c(Source, rep(cat_namesD[num], times = dim(similarity_down)[1], each = 1:dim(similarity_down)[1]))
+          Target <- c(Target, rep(cat_namesD, times = 1, each = 1))
+          Value <- c(Value, similarity_down[num, ])
+          num <- num + 1
 }
 
-networkDown <- data.frame(Source, Target, Value)
-networkDown_final <- networkDown
+#### Matriz de adyacencia para crear la red
+    networkDown <- data.frame(Source, Target, Value)
+    networkDown_final <- networkDown
 
 #### quitando los invalidos
-num <- 1
-for(i in 1:length(invalid_down)){
-  networkDown_final <- filter(networkDown_final, Source != invalid_down[num])
-  num <- num + 1
+    num <- 1
+      for(i in 1:length(invalid_down)){
+        networkDown_final <- filter(networkDown_final, Source != invalid_down[num])
+        num <- num + 1
 }
-View(networkDown_final)
-#### quitando NAs
-#networkDown_final$Value[networkDown_final$Value <= 0.05] <- "NA"
-networkDown_final <- filter(networkDown_final, Value != "NA")
-networkDown_final
 
-netD <- networkDown_final[order(networkDown_final$Value, decreasing = T), ]
-net <- networkDown_final
-netD100 <- netD[1:100, ] ### recuerda que debes correr de nuevo netD, para que se genere una vez mas la tabla
-net <- net[1:300,]
-netD100
+#### quitando NAs
+    networkDown_final <- filter(networkDown_final, Value != "NA")
+    networkDown_final
+
+    netD <- networkDown_final[order(networkDown_final$Value, decreasing = T), ]
+    net <- networkDown_final
+    netD100 <- netD[1:100, ] ### recuerda que debes correr de nuevo netD, para que se genere una vez mas la tabla
+
 
 Net_down <- simpleNetwork(netD100, width = 400, height = 250, fontSize = 14, nodeColour ="blue", zoom = T)
 saveNetwork(Net_down, file = "Net_down.html", selfcontained = T)
 
-#### con enrich plot
-emapplot(down, showCategory = 10)
-cnetplot(down)
-
-
 ########################## PARA LOS UP
 GO_upT <- as.data.frame(GO_up)
 GO_upT$Description <- chartr(old = " ", new = "_", GO_upT$Description)
-#GO_upT <- GO_upT@result[order(GO_upT@result$Count, decreasing = T),]
-#GO_upT <- filter(GO_upT, Count > 20)
-#GO_upT <- enrichGO(GO_upT)
 
 invalid_up <- filter(GO_upT, Count < lim)
 invalid_up <- invalid_up$Description
@@ -262,6 +275,7 @@ for(i in 1:dim(similarity_up)[1]){
   num <- num + 1
   
 }
+
 
 Source
 Target
@@ -292,13 +306,10 @@ emapplot(up, showCategory = 10)
 cnetplot(up)
 }
 
-netGO( 20)
 
 ############################33
 #############################
 #   FORCE NETWORK
-library(networkD3)
-library(dplyr)
 ### Acortamos la red a 400 elementos, para que la compu no explote
 netD_UP2 <- netD_UP[1:400, ]
 
